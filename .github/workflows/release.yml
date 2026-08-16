@@ -1,0 +1,66 @@
+name: Build and publish Windows installer
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress --yes
+
+      - name: Build installer
+        shell: powershell
+        run: |
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+            "$env:ChocolateyInstall\bin\iscc.exe"
+          )
+          $compiler = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $compiler) { throw 'Inno Setup compiler was not found after installation.' }
+          & $compiler "installer\DeepSeekHarness.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE." }
+
+      - name: Verify installer output
+        shell: powershell
+        run: |
+          $installer = 'dist\DeepSeek-Harness-Desktop-Setup.exe'
+          if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) {
+            throw "Expected installer was not created: $installer"
+          }
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeepSeek-Harness-Desktop-Setup
+          path: dist/DeepSeek-Harness-Desktop-Setup.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}' } else { 'v1.0.0' }
+          gh release view $tag --repo '${{ github.repository }}' *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $tag already exists; leaving it unchanged."
+          }
+          else {
+            gh release create $tag "dist\DeepSeek-Harness-Desktop-Setup.exe" --repo '${{ github.repository }}' --target '${{ github.sha }}' --title "DeepSeek Harness $tag" --generate-notes
+          }
