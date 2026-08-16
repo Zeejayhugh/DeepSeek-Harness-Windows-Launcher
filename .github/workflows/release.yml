@@ -57,10 +57,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}' } else { 'v1.0.0' }
-          gh release view $tag --repo '${{ github.repository }}' *> $null
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "Release $tag already exists; leaving it unchanged."
-          }
-          else {
-            gh release create $tag "dist\DeepSeek-Harness-Desktop-Setup.exe" --repo '${{ github.repository }}' --target '${{ github.sha }}' --title "DeepSeek Harness $tag" --generate-notes
-          }
+          gh release create $tag "dist\DeepSeek-Harness-Desktop-Setup.exe" --repo '${{ github.repository }}' --target '${{ github.sha }}' --title "DeepSeek Harness $tag" --generate-notes
