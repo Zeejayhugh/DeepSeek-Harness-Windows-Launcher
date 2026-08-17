@@ -17,6 +17,12 @@
 > [!NOTE]
 > 首次使用前，需要安装 **Node.js LTS**，并确保电脑能够正常连接网络。DeepSeek API Key 不包含在本项目中，需要用户自行配置。
 
+## v1.0.1 更新说明
+
+- 修复首次启动时，npx 等待安装确认而导致 DeepSeek Harness 无法启动的问题。
+- 启动器现在使用 `npx --yes @deepseek-ai/dsh web` 以非交互方式启动，用户无需打开 PowerShell，也无需输入 `y`。
+- 如果启动失败，stdout 和 stderr 日志会保存到 `%LOCALAPPDATA%\DeepSeekHarness\Logs`，方便排查。
+
 ## 使用前准备
 
 使用本启动器需要满足以下条件：

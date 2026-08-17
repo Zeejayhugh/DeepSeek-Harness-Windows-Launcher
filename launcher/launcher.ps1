@@ -83,6 +83,8 @@ try {
     if (-not (Test-HarnessReady)) {
         New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
 
+        # Prevent npx/npm from waiting for an invisible first-run confirmation prompt.
+        $env:npm_config_yes = 'true'
         $process = Start-Process -FilePath $npxCommand.Source `
             -ArgumentList @('--yes', '@deepseek-ai/dsh', 'web') `
             -WindowStyle Hidden `
